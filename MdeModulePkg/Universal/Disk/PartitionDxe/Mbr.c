@@ -293,6 +293,17 @@ PartitionInstallMbrChildHandles (
           (Mbr->Partition[0].OSIndicator == EXTENDED_WINDOWS_PARTITION))
       {
         ExtMbrStartingLba = UNPACK_UINT32 (Mbr->Partition[0].StartingLBA);
+        // _Dell_Add_Start_
+        // Read Disk does a modification of ExtMbrStartingLba with the code MultU64x32 (ExtMbrStartingLba, BlockSize)
+        // Error detection to see if ExtMbrStartingLBA has a value of 0. This is invalid as LBA 0 = MBR. 
+        // After that modification, the next time ExtMbrStartingLba is in this function
+        // if ExtMbrStartingLba is set to 0 in the MBR it never passes the while/do evaluation
+        // It is multiplied by 0 by read disk , set to 0 by an invalid MBR and goes back to evaluation 
+        // This condition will also cause Ws19 and WS22 to hang, however Microsoft has developed a hotfix patch that will be released in 2022
+        if (ExtMbrStartingLba == 0) {
+            break;
+        }
+        //_Dell_Add_End_
         continue;
       }
 
